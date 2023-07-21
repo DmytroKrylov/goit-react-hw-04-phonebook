@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 const INITIAL_STATE = {
@@ -9,29 +9,26 @@ const INITIAL_STATE = {
 const ContactForm = ({ onAdd, onCheckUnique }) => {
   const [formData, setFormData] = useState(INITIAL_STATE);
 
-  const handleChangeForm = useCallback(({ target }) => {
-    const { name, value } = target;
+  const handleChangeForm = event => {
+    const { name, value } = event.target;
     setFormData(prevFormData => ({ ...prevFormData, [name]: value }));
-  }, []);
+  };
 
-  const handleFormSubmit = useCallback(
-    e => {
-      e.preventDefault();
-      const { name, number } = formData;
-      const isValidateForm = validateForm();
-      if (!isValidateForm) return;
-      onAdd({ name, number });
-      resetForm();
-    },
-    [formData, onAdd]
-  );
+  const handleFormSubmit = event => {
+    event.preventDefault();
+    const { name, number } = formData;
+    const isValidateForm = validateForm();
+    if (!isValidateForm) return;
+    onAdd({ name, number });
+    resetForm();
+  };
 
-  const resetForm = useCallback(() => setFormData(INITIAL_STATE), []);
+  const resetForm = () => setFormData(INITIAL_STATE);
 
-  const validateForm = useCallback(() => {
+  const validateForm = () => {
     const { name } = formData;
     return onCheckUnique(name);
-  }, [formData, onCheckUnique]);
+  };
 
   const { name, number } = formData;
 

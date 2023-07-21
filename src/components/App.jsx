@@ -1,81 +1,74 @@
-import { Component } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Filter from './Filter/Filter';
 import ContactForm from './ContactForm/ContactForm';
 import ContactList from './ContactList/ContactList';
-import Filter from './Filter/Filter';
 import { v4 as uuidv4 } from 'uuid';
 
-class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
+const INITIAL_STATE = [
+  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+];
 
-  componentDidMount = () => {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
+const App = () => {
+  const [contacts, setContacts] = useState(INITIAL_STATE);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    const storedContacts = localStorage.getItem('contacts');
+    const parsedContacts = JSON.parse(storedContacts);
     if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
+      setContacts(parsedContacts);
     }
-  };
+  }, []);
 
-  componentDidUpdate = prevState => {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  };
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  handleAddContact = newContact => {
+  const handleAddContact = newContact => {
     newContact.id = uuidv4();
-    this.setState(({ contacts }) => ({
-      contacts: [...contacts, newContact],
-    }));
+    setContacts(prevContacts => [...prevContacts, newContact]);
   };
 
-  handleCheckContact = name => {
-    const { contacts } = this.state;
-    const isExistContact = !!contacts.find(contact => contact.name === name);
-    isExistContact && alert(`${name} is already in contacs`);
-    return !isExistContact;
-  };
+  const handleCheckContact = useCallback(
+    name => {
+      return !contacts.some(contact => contact.name === name);
+    },
+    [contacts]
+  );
 
-  handleRemoveContact = id =>
-    this.setState(({ contacts }) => ({
-      contacts: contacts.filter(contact => contact.id !== id),
-    }));
+  const handleRemoveContact = useCallback(
+    id =>
+      setContacts(prevContacts =>
+        prevContacts.filter(contact => contact.id !== id)
+      ),
+    []
+  );
 
-  handleFilterChange = filter => this.setState({ filter });
+  const handleFilterChange = useCallback(filterValue => {
+    setFilter(filterValue);
+  }, []);
 
-  getFilterContacts = () => {
-    const { contacts, filter } = this.state;
+  const filteredContacts = useMemo(() => {
     return contacts.filter(contact =>
       contact.name.toLowerCase().includes(filter.toLowerCase())
     );
-  };
+  }, [contacts, filter]);
 
-  render() {
-    const { filter } = this.state;
-    const filterContacts = this.getFilterContacts();
-    return (
-      <>
-        <h2>Phonebook</h2>
-        <ContactForm
-          onAdd={this.handleAddContact}
-          onCheckUnique={this.handleCheckContact}
-        />
-        <h2>Contacts List</h2>
-        <Filter filter={filter} onChange={this.handleFilterChange} />
-        <ContactList
-          contacts={filterContacts}
-          onRemove={this.handleRemoveContact}
-        />
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <h2>Phonebook</h2>
+      <ContactForm
+        onAdd={handleAddContact}
+        onCheckUnique={handleCheckContact}
+      />
+      <h2>Contacts List</h2>
+      <Filter filter={filter} onChange={handleFilterChange} />
+      <ContactList contacts={filteredContacts} onRemove={handleRemoveContact} />
+    </>
+  );
+};
 
 export default App;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Filter from './Filter/Filter';
 import ContactForm from './ContactForm/ContactForm';
 import ContactList from './ContactList/ContactList';
@@ -12,16 +12,12 @@ const INITIAL_STATE = [
 ];
 
 const App = () => {
-  const [contacts, setContacts] = useState(INITIAL_STATE);
-  const [filter, setFilter] = useState('');
-
-  useEffect(() => {
+  const [contacts, setContacts] = useState(() => {
     const storedContacts = localStorage.getItem('contacts');
     const parsedContacts = JSON.parse(storedContacts);
-    if (parsedContacts) {
-      setContacts(parsedContacts);
-    }
-  }, []);
+    return parsedContacts || INITIAL_STATE;
+  });
+  const [filter, setFilter] = useState('');
 
   useEffect(() => {
     localStorage.setItem('contacts', JSON.stringify(contacts));
@@ -32,30 +28,28 @@ const App = () => {
     setContacts(prevContacts => [...prevContacts, newContact]);
   };
 
-  const handleCheckContact = useCallback(
-    name => {
-      return !contacts.some(contact => contact.name === name);
-    },
-    [contacts]
-  );
+  const handleCheckContact = name => {
+    return !contacts.some(
+      contact => contact.name.toLowerCase() === name.toLowerCase()
+    );
+  };
 
-  const handleRemoveContact = useCallback(
-    id =>
-      setContacts(prevContacts =>
-        prevContacts.filter(contact => contact.id !== id)
-      ),
-    []
-  );
+  const handleRemoveContact = id =>
+    setContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== id)
+    );
 
-  const handleFilterChange = useCallback(filterValue => {
+  const handleFilterChange = filterValue => {
     setFilter(filterValue);
-  }, []);
+  };
 
-  const filteredContacts = useMemo(() => {
+  const filterContacts = () => {
     return contacts.filter(contact =>
       contact.name.toLowerCase().includes(filter.toLowerCase())
     );
-  }, [contacts, filter]);
+  };
+
+  const filteredContacts = filterContacts();
 
   return (
     <>
